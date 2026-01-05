@@ -127,8 +127,40 @@ app.get('/search',(req,res) => {
           user: newUser
         });
       });
-    });
-  
+    });  
+  })
+
+  // Actualización de usuario existente (PUT)
+  // Recibe ID por parámetro de ruta y datos a actualizar en el body
+  // Actualiza el usuario mediante merge de propiedades y persiste cambios
+  app.put('/users/:id', (req, res) => {
+    // Parsear el ID del usuario desde los parámetros de ruta
+    const userId = parseInt(req.params.id);
+    // Datos de actualización desde el cuerpo de la petición
+    const updateDate = req.body;
+
+    // Leer el archivo de usuarios desde disco
+    fs.readFile(usersFilePath, 'utf-8', (err, data) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error con la conexión de datos' });   
+      }
+      // Parsear el contenido JSON a un arreglo de usuarios
+      let users = JSON.parse(data);
+      // Buscar y actualizar el usuario con el ID especificado (merge de propiedades)
+      users = users.map(user => user.id === userId? { ...user, ...updateDate } : user);
+
+      // Persistir los cambios de vuelta al archivo JSON
+      fs.writeFile(usersFilePath, JSON.stringify(users, null, 2), (err) => {
+        if (err) {
+          return res.status(500).json({ error: 'Error al actualizar el usuario' });
+        }
+        // Responder con confirmación y el usuario actualizado
+        res.json({
+          message: 'Usuario actualizado con éxito',
+          user: users.find(user => user.id === userId)
+        });
+      });
+    })
   })
 
 
